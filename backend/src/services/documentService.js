@@ -1,24 +1,23 @@
 const { randomUUID } = require('node:crypto');
+const DocumentError = require('../errors/documentError');
 
 class DocumentService {
   constructor(documentRepository) {
     this.documentRepository = documentRepository;
   }
 
-  create(file, owner) {
-    if (!file) {
-      const error = new Error('Arquivo é obrigatório.');
-      error.statusCode = 400;
-      throw error;
+  create(documentData, owner) {
+    if (!documentData) {
+      throw DocumentError.fileRequired();
     }
 
     return this.documentRepository.save({
       id: randomUUID(),
-      originalName: file.originalname,
-      size: file.size,
+      originalName: documentData.originalName,
+      size: documentData.size,
       uploadedAt: new Date().toISOString(),
       owner: owner || 'anonymous',
-      storagePath: file.path,
+      storagePath: documentData.storagePath,
     });
   }
 
@@ -30,9 +29,7 @@ class DocumentService {
     const document = this.documentRepository.findById(id);
 
     if (!document) {
-      const error = new Error('Documento não encontrado.');
-      error.statusCode = 404;
-      throw error;
+      throw DocumentError.notFound();
     }
 
     return document;

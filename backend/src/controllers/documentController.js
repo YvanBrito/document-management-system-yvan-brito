@@ -8,6 +8,18 @@ function toResponse(document) {
   };
 }
 
+function toDocumentData(file) {
+  if (!file) {
+    return null;
+  }
+
+  return {
+    originalName: file.originalname,
+    size: file.size,
+    storagePath: file.path,
+  };
+}
+
 class DocumentController {
   constructor(documentService) {
     this.documentService = documentService;
@@ -15,7 +27,7 @@ class DocumentController {
 
   upload = (request, response, next) => {
     try {
-      const document = this.documentService.create(request.file, request.body.owner);
+      const document = this.documentService.create(toDocumentData(request.file), request.body.owner);
       response.status(201).json(toResponse(document));
     } catch (error) {
       next(error);
