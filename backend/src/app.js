@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('node:path');
 const DocumentController = require('./controllers/documentController');
+const DocumentError = require('./errors/documentError');
 const DocumentRepository = require('./repositories/documentRepository');
 const createDocumentRouter = require('./routes/documentRoutes');
 const DocumentService = require('./services/documentService');
@@ -8,6 +9,10 @@ const DocumentService = require('./services/documentService');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const storagePath = process.env.STORAGE_PATH || path.resolve(__dirname, '../storage');
+const documentErrorStatus = {
+  [DocumentError.codes.FILE_REQUIRED]: 400,
+  [DocumentError.codes.DOCUMENT_NOT_FOUND]: 404,
+};
 
 const documentRepository = new DocumentRepository();
 const documentService = new DocumentService(documentRepository);
@@ -25,8 +30,10 @@ app.use((error, request, response, next) => {
     return next(error);
   }
 
-  return response.status(error.statusCode || 500).json({
-    error: error.statusCode ? error.message : 'Erro interno do servidor.',
+  const statusCode = error.statusCode || documentErrorStatus[error.code] || 500;
+
+  return response.status(statusCode).json({
+    error: statusCode < 500 ? error.message : 'Erro interno do servidor.',
   });
 });
 
