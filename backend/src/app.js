@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('node:path');
 const DocumentController = require('./controllers/documentController');
+const { NotFoundError, ValidationError } = require('./errors/applicationErrors');
 const DocumentRepository = require('./repositories/documentRepository');
 const createDocumentRouter = require('./routes/documentRoutes');
 const DocumentService = require('./services/documentService');
@@ -25,8 +26,14 @@ app.use((error, request, response, next) => {
     return next(error);
   }
 
-  return response.status(error.statusCode || 500).json({
-    error: error.statusCode ? error.message : 'Erro interno do servidor.',
+  const statusCodeByError = new Map([
+    [ValidationError, 400],
+    [NotFoundError, 404],
+  ]);
+  const statusCode = statusCodeByError.get(error.constructor) || error.statusCode || 500;
+
+  return response.status(statusCode).json({
+    error: statusCode < 500 ? error.message : 'Erro interno do servidor.',
   });
 });
 
